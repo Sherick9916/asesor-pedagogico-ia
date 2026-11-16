@@ -1,0 +1,59 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Modelo de Laboratorios y Cohortes
+model Laboratory {
+  id          String   @id @default(cuid())
+  cohort      Int      // Cohorte 1 o 2
+  title       String
+  description String
+  objectives  String
+  rubricJson  Json     // Criterios, ponderaciones y descriptores
+  evaluations Evaluation[]
+  createdAt   DateTime @default(now())
+}
+
+// Modelo de Entregas del Estudiante
+model StudentSubmission {
+  id           String   @id @default(cuid())
+  studentName  String
+  studentEmail String
+  cohort       Int
+  pdfUrl       String   // Enlace o texto extraído del informe en PDF
+  githubRepo   String?  // Enlace al repositorio de código fuente
+  evaluations  Evaluation[]
+  createdAt    DateTime @default(now())
+}
+
+// Modelo de Evaluación Inteligente por la IA y Verificación Docente
+model Evaluation {
+  id            String             @id @default(cuid())
+  laboratoryId  String
+  laboratory    Laboratory         @relation(fields: [laboratoryId], references: [id])
+  submissionId  String
+  submission    StudentSubmission  @relation(fields: [submissionId], references: [id])
+
+  rawAiOutput   Json               // Resultado estructurado devuelto por el LLM
+  finalScore    Float              // Nota preliminar calculada por el backend (0.0 a 5.0)
+  feedback      String             // Retroalimentación y recomendaciones personalizadas
+  isApproved    Boolean            @default(false) // Trazabilidad y aprobación docente
+
+  createdAt     DateTime @default(now())
+}
+
+// Modelo para el Informe Integral y Mapa Mental
+model LearningReport {
+  id           String   @id @default(cuid())
+  studentEmail String
+  globalScore  Float
+  strengths    String[]
+  weaknesses   String[]
+  mindMapData  Json     // Estructura de datos para generar el mapa mental interactivo
+  updatedAt    DateTime @updatedAt
+}
